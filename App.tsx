@@ -188,6 +188,19 @@ const App: React.FC = () => {
     }
   };
 
+  const handleShare = useCallback(() => {
+    if (!fullContent) return;
+    
+    const shareMsg: Message = {
+      id: Date.now().toString(),
+      role: Role.MODEL,
+      text: `已为您将《${fullContent.title}》分享至聊天框。如需再次查看，可随时点击上方的明细查询链接。`,
+    };
+    
+    setMessages(prev => [...prev, shareMsg]);
+    setView(AppView.CHAT);
+  }, [fullContent]);
+
   return (
     <div className="flex justify-center min-h-screen bg-slate-100 dark:bg-slate-900 font-display">
       <div className="relative flex h-screen w-full max-w-[480px] flex-col bg-white dark:bg-background-dark shadow-2xl overflow-hidden ring-1 ring-slate-200 dark:ring-slate-800">
@@ -215,7 +228,7 @@ const App: React.FC = () => {
             <ChatView messages={messages} isThinking={isThinking} onSuggestion={(s) => handleSendMessage(s)} />
           )}
           {view === AppView.FULL_CONTENT && (
-            <FullContentView data={fullContent} />
+            <FullContentView data={fullContent} onShare={handleShare} />
           )}
         </main>
 

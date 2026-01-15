@@ -4,9 +4,10 @@ import { FullContentData } from '../types';
 
 interface FullContentViewProps {
   data: FullContentData | null;
+  onShare: () => void;
 }
 
-const FullContentView: React.FC<FullContentViewProps> = ({ data }) => {
+const FullContentView: React.FC<FullContentViewProps> = ({ data, onShare }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -42,9 +43,12 @@ const FullContentView: React.FC<FullContentViewProps> = ({ data }) => {
               <p className="text-[11px] text-slate-500 font-medium">共 {data.items.length} 条记录</p>
             </div>
           </div>
-          <button className="text-primary text-xs font-bold flex items-center gap-1 hover:bg-primary/5 px-2 py-1 rounded-lg transition-colors">
-            <span className="material-symbols-outlined text-[16px]">filter_list</span>
-            筛选
+          <button 
+            onClick={onShare}
+            className="text-primary text-xs font-bold flex items-center gap-1 hover:bg-primary/5 px-2 py-1 rounded-lg transition-colors"
+          >
+            <span className="material-symbols-outlined text-[16px]">share</span>
+            分享
           </button>
         </div>
 
