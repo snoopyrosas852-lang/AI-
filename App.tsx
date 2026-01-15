@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Message, Role, AppView, Source, InteractiveOption, FullContentData, FullContentItem, DisplayMode } from './types';
+import { Message, Role, AppView, AppMode, Source, InteractiveOption, FullContentData, FullContentItem, DisplayMode } from './types';
 import { GeminiService } from './services/geminiService';
 import Header from './components/Header';
 import HomeView from './components/HomeView';
@@ -8,8 +8,10 @@ import ChatView from './components/ChatView';
 import MessageInput from './components/MessageInput';
 import Sidebar from './components/Sidebar';
 import FullContentView from './components/FullContentView';
+import AdminLayout from './components/AdminLayout';
 
 const App: React.FC = () => {
+  const [appMode, setAppMode] = useState<AppMode>(AppMode.USER);
   const [view, setView] = useState<AppView>(AppView.HOME);
   const [displayMode, setDisplayMode] = useState<DisplayMode>(DisplayMode.DESKTOP);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -116,86 +118,29 @@ const App: React.FC = () => {
 
   const isDesktop = displayMode === DisplayMode.DESKTOP;
 
-  // PC 模式下的主要布局渲染
-  const renderDesktopLayout = () => (
-    <div className="flex w-full h-screen bg-white dark:bg-slate-950 overflow-hidden">
-      {/* 1. Left Sidebar - Persistent History */}
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
-        onNewChat={resetChat} 
-        displayMode={displayMode}
-      />
-      
-      {/* 2. Content Column */}
-      <div className="flex flex-1 flex-col overflow-hidden relative">
-        <Header 
-          view={view} 
-          displayMode={displayMode}
-          onBack={() => setView(AppView.HOME)} 
-          onClear={resetChat} 
-          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          onToggleDisplay={() => setDisplayMode(DisplayMode.MOBILE)}
-        />
-        
-        <div className="flex flex-1 overflow-hidden relative">
-          {/* Main Chat Area */}
-          <main 
-            ref={scrollRef}
-            className={`flex-1 overflow-y-auto custom-scrollbar flex flex-col bg-white dark:bg-slate-950 transition-all duration-300`}
-          >
-            <div className="max-w-[1000px] mx-auto w-full flex-1 flex flex-col px-6">
-              {view === AppView.HOME ? (
-                <HomeView onPromptSelect={handleSendMessage} />
-              ) : (
-                <ChatView messages={messages} isThinking={isThinking} onSuggestion={handleSendMessage} />
-              )}
-            </div>
-            
-            {/* Input Bar pinned to bottom of chat list */}
-            <div className="sticky bottom-0 w-full bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 p-6">
-              <div className="max-w-[900px] mx-auto">
-                <MessageInput 
-                  value={inputText}
-                  onChange={setInputText}
-                  onSend={() => handleSendMessage()}
-                  isLoading={isThinking}
-                  onReset={resetChat}
-                  showReset={view === AppView.CHAT}
-                />
-              </div>
-            </div>
-          </main>
-
-          {/* 3. Right Details Panel */}
-          <aside className={`
-            border-l border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 transition-all duration-500 overflow-hidden
-            ${isRightPanelOpen ? 'w-[450px]' : 'w-0'}
-          `}>
-            <div className="w-[450px] h-full flex flex-col">
-              <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">analytics</span>
-                  <span className="font-bold text-sm">关联明细视图</span>
-                </div>
-                <button onClick={() => setIsRightPanelOpen(false)} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg">
-                  <span className="material-symbols-outlined text-[20px]">close</span>
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <FullContentView data={fullContent} onShare={() => {}} isEmbedded={true} />
-              </div>
-            </div>
-          </aside>
-        </div>
-      </div>
+  const renderModeSwitcher = () => (
+    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-white/90 dark:bg-slate-900/90 border border-slate-200/50 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl p-1.5 flex items-center gap-1 backdrop-blur-xl">
+      <button 
+        onClick={() => setAppMode(AppMode.USER)}
+        className={`px-5 py-2 rounded-xl text-[13px] font-bold transition-all flex items-center gap-2 ${appMode === AppMode.USER ? 'bg-[#f1f4ff] text-[#5c5ce0]' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+      >
+        <span className="material-symbols-outlined text-[20px]">person</span>
+        前台助手
+      </button>
+      <button 
+        onClick={() => setAppMode(AppMode.ADMIN)}
+        className={`px-5 py-2 rounded-xl text-[13px] font-bold transition-all flex items-center gap-2 ${appMode === AppMode.ADMIN ? 'bg-[#5c5ce0] text-white' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+      >
+        <span className="material-symbols-outlined text-[20px]">settings</span>
+        管理后台
+      </button>
     </div>
   );
 
-  // 移动端模式下的主要布局渲染
-  const renderMobileLayout = () => (
-    <div className="flex items-center justify-center min-h-screen bg-slate-100 dark:bg-slate-900 p-4">
-      <div className="relative flex flex-col w-full max-w-[480px] h-[90vh] bg-white dark:bg-slate-950 rounded-[3rem] shadow-2xl overflow-hidden ring-8 ring-slate-800/5 dark:ring-white/5 border-[8px] border-slate-800 dark:border-slate-900">
+  // User App Layout
+  const renderUserLayout = () => (
+    isDesktop ? (
+      <div className="flex w-full h-screen bg-white dark:bg-slate-950 overflow-hidden">
         <Sidebar 
           isOpen={isSidebarOpen} 
           onClose={() => setIsSidebarOpen(false)} 
@@ -203,45 +148,119 @@ const App: React.FC = () => {
           displayMode={displayMode}
         />
         
-        <Header 
-          view={view} 
-          displayMode={displayMode}
-          onBack={() => setView(AppView.HOME)} 
-          onClear={resetChat} 
-          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          onToggleDisplay={() => setDisplayMode(DisplayMode.DESKTOP)}
-        />
-        
-        <main ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
-          {view === AppView.HOME ? (
-            <HomeView onPromptSelect={handleSendMessage} />
-          ) : view === AppView.FULL_CONTENT ? (
-            <FullContentView data={fullContent} onShare={() => setView(AppView.CHAT)} />
-          ) : (
-            <ChatView messages={messages} isThinking={isThinking} onSuggestion={handleSendMessage} />
-          )}
-        </main>
+        <div className="flex flex-1 flex-col overflow-hidden relative">
+          <Header 
+            view={view} 
+            displayMode={displayMode}
+            onBack={() => setView(AppView.HOME)} 
+            onClear={resetChat} 
+            onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            onToggleDisplay={() => setDisplayMode(DisplayMode.MOBILE)}
+          />
+          
+          <div className="flex flex-1 overflow-hidden relative">
+            <main 
+              ref={scrollRef}
+              className={`flex-1 overflow-y-auto custom-scrollbar flex flex-col bg-white dark:bg-slate-950 transition-all duration-300`}
+            >
+              <div className="max-w-[1000px] mx-auto w-full flex-1 flex flex-col px-6">
+                {view === AppView.HOME ? (
+                  <HomeView onPromptSelect={handleSendMessage} />
+                ) : (
+                  <ChatView messages={messages} isThinking={isThinking} onSuggestion={handleSendMessage} />
+                )}
+              </div>
+              
+              <div className="sticky bottom-0 w-full bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 p-6">
+                <div className="max-w-[900px] mx-auto">
+                  <MessageInput 
+                    value={inputText}
+                    onChange={setInputText}
+                    onSend={() => handleSendMessage()}
+                    isLoading={isThinking}
+                    onReset={resetChat}
+                    showReset={view === AppView.CHAT}
+                  />
+                </div>
+              </div>
+            </main>
 
-        <footer className={`p-4 bg-white/90 dark:bg-slate-950/90 border-t border-slate-100 dark:border-slate-800 ${view === AppView.FULL_CONTENT ? 'hidden' : 'block'}`}>
-           <MessageInput 
-              value={inputText}
-              onChange={setInputText}
-              onSend={() => handleSendMessage()}
-              isLoading={isThinking}
-              onReset={resetChat}
-              showReset={view === AppView.CHAT}
-            />
-        </footer>
-        
-        {/* Mobile Safe Indicator */}
-        <div className="h-6 w-full bg-white dark:bg-slate-950 flex justify-center items-start">
-          <div className="w-24 h-1 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+            <aside className={`
+              border-l border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 transition-all duration-500 overflow-hidden
+              ${isRightPanelOpen ? 'w-[450px]' : 'w-0'}
+            `}>
+              <div className="w-[450px] h-full flex flex-col">
+                <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary">analytics</span>
+                    <span className="font-bold text-sm">关联明细视图</span>
+                  </div>
+                  <button onClick={() => setIsRightPanelOpen(false)} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg">
+                    <span className="material-symbols-outlined text-[20px]">close</span>
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  <FullContentView data={fullContent} onShare={() => {}} isEmbedded={true} />
+                </div>
+              </div>
+            </aside>
+          </div>
         </div>
       </div>
-    </div>
+    ) : (
+      <div className="flex items-center justify-center min-h-screen bg-slate-100 dark:bg-slate-900 p-4">
+        <div className="relative flex flex-col w-full max-w-[480px] h-[90vh] bg-white dark:bg-slate-950 rounded-[3rem] shadow-2xl overflow-hidden ring-8 ring-slate-800/5 dark:ring-white/5 border-[8px] border-slate-800 dark:border-slate-900">
+          <Sidebar 
+            isOpen={isSidebarOpen} 
+            onClose={() => setIsSidebarOpen(false)} 
+            onNewChat={resetChat} 
+            displayMode={displayMode}
+          />
+          
+          <Header 
+            view={view} 
+            displayMode={displayMode}
+            onBack={() => setView(AppView.HOME)} 
+            onClear={resetChat} 
+            onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            onToggleDisplay={() => setDisplayMode(DisplayMode.DESKTOP)}
+          />
+          
+          <main ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+            {view === AppView.HOME ? (
+              <HomeView onPromptSelect={handleSendMessage} />
+            ) : view === AppView.FULL_CONTENT ? (
+              <FullContentView data={fullContent} onShare={() => setView(AppView.CHAT)} />
+            ) : (
+              <ChatView messages={messages} isThinking={isThinking} onSuggestion={handleSendMessage} />
+            )}
+          </main>
+
+          <footer className={`p-4 bg-white/90 dark:bg-slate-950/90 border-t border-slate-100 dark:border-slate-800 ${view === AppView.FULL_CONTENT ? 'hidden' : 'block'}`}>
+             <MessageInput 
+                value={inputText}
+                onChange={setInputText}
+                onSend={() => handleSendMessage()}
+                isLoading={isThinking}
+                onReset={resetChat}
+                showReset={view === AppView.CHAT}
+              />
+          </footer>
+          
+          <div className="h-6 w-full bg-white dark:bg-slate-950 flex justify-center items-start">
+            <div className="w-24 h-1 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+          </div>
+        </div>
+      </div>
+    )
   );
 
-  return isDesktop ? renderDesktopLayout() : renderMobileLayout();
+  return (
+    <>
+      {appMode === AppMode.USER ? renderUserLayout() : <AdminLayout onClose={() => setAppMode(AppMode.USER)} />}
+      {renderModeSwitcher()}
+    </>
+  );
 };
 
 export default App;
