@@ -33,6 +33,11 @@ export enum AppView {
   FULL_CONTENT = 'FULL_CONTENT'
 }
 
+export enum DisplayMode {
+  MOBILE = 'MOBILE',
+  DESKTOP = 'DESKTOP'
+}
+
 export interface FullContentItem {
   id: string;
   title: string;
