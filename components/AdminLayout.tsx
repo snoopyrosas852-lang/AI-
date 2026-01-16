@@ -5,14 +5,15 @@ import {
   IntentOverrideRule, 
   DataConnector, 
   AtomicIntent,
-  IntentCategory
+  IntentCategory,
+  BadCase
 } from '../types';
 
 interface AdminLayoutProps {
   onClose: () => void;
 }
 
-type TabType = 'dashboard' | 'intent_override' | 'intent_dictionary' | 'intent_category' | 'datasource' | 'knowledge';
+type TabType = 'dashboard' | 'intent_override' | 'intent_dictionary' | 'intent_category' | 'datasource' | 'bad_cases';
 type ModalType = 'none' | 'single' | 'batch';
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ onClose }) => {
@@ -78,6 +79,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ onClose }) => {
     { id: 'ai4', code: 'support_system_check', name: '系统检查', description: '检查核心业务系统的实时运行健康状态', category: 'support' },
     { id: 'ai5', code: 'business_asset_apply', name: '资产申领', description: '发起企业内部资产申领工作流', category: 'business' },
     { id: 'ai6', code: 'business_finance_reimburse', name: '财务报销', description: '启动财务报销辅助助手及表单引导', category: 'business' },
+  ]);
+
+  const [badCases] = useState<BadCase[]>([
+    { id: 'bc1', query: '我的订单到哪了', aiResponse: '请问您的订单号是多少？', correction: '上下文已有单号 ORD-10251，应直接查询。', timestamp: '2024-05-20 14:22' },
+    { id: 'bc2', query: '我想申请退货', aiResponse: '好的，请问退货原因是什么？', correction: '意图识别为 HR_POLICY，应为 OMS_RETURN。', timestamp: '2024-05-20 15:01' },
+    { id: 'bc3', query: '餐补标准是多少', aiResponse: '抱歉，我不清楚您的部门。', correction: 'RAG 检索未命中，应召回《员工通用手册》。', timestamp: '2024-05-20 16:45' },
+    { id: 'bc4', query: '开票抬头是什么', aiResponse: '公司的开票抬头是：XX科技有限公司', correction: '回答正确但建议增加纳税人识别号。', timestamp: '2024-05-21 09:10' },
+    { id: 'bc5', query: '项目进度怎么看', aiResponse: '请点击导航栏的项目管理。', correction: '应调用项目接口返回当前参与项目的卡片。', timestamp: '2024-05-21 11:30' },
+    { id: 'bc6', query: '怎么查公积金', aiResponse: '请登录社保官网。', correction: '由于接入了 HR 系统，应引导用户进行意图澄清。', timestamp: '2024-05-21 13:05' },
   ]);
 
   const [connectors] = useState<DataConnector[]>([
@@ -156,7 +166,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ onClose }) => {
   };
 
   const renderDashboard = () => (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
       {/* 1. 核心效能指标 (Core Performance) */}
       <div>
         <div className="flex items-center justify-between mb-6">
@@ -188,7 +198,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ onClose }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* 2. 意图识别质量 (Intent Quality) */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 p-10 flex flex-col shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between mb-8">
@@ -197,15 +207,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ onClose }) => {
               模型识别质量
             </h3>
             <button 
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl text-xs font-black uppercase tracking-widest transition-all hover:bg-indigo-100 dark:hover:bg-indigo-900/50 active:scale-95 border border-indigo-100/50 dark:border-indigo-800/50"
-              onClick={() => alert('正在加载坏案例列表...')}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 rounded-xl text-xs font-black uppercase tracking-widest transition-all hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200 dark:border-slate-700 active:scale-95"
+              onClick={() => setActiveTab('bad_cases')}
             >
               <span className="material-symbols-outlined text-[16px]">bug_report</span>
               查看坏案例 (BadCases)
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          <div className="max-w-2xl">
             <div className="space-y-8">
               <div>
                 <div className="flex justify-between items-end mb-2">
@@ -215,7 +225,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ onClose }) => {
                 <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div className="h-full bg-rose-500 rounded-full" style={{ width: `${stats.correctionRate * 5}%` }}></div>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-2">1分钟内重复或修正提问的频率</p>
+                <p className="text-[10px] text-slate-400 mt-2 font-medium">1分钟内重复或修正提问的频率</p>
               </div>
 
               <div>
@@ -226,7 +236,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ onClose }) => {
                 <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${stats.overrideRatio}%` }}></div>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-2">命中规则库强匹配指令的比例</p>
+                <p className="text-[10px] text-slate-400 mt-2 font-medium">命中规则库强匹配指令的比例</p>
               </div>
 
               <div>
@@ -237,26 +247,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ onClose }) => {
                 <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div className="h-full bg-amber-500 rounded-full" style={{ width: `${stats.outOfScopeRate * 4}%` }}></div>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-2">识别为 Unknown Intent 的比例</p>
+                <p className="text-[10px] text-slate-400 mt-2 font-medium">识别为 Unknown Intent 的比例</p>
               </div>
-            </div>
-
-            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-6 border border-slate-100 dark:border-slate-800">
-               <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">系统健康建议</h4>
-               <ul className="space-y-4">
-                 <li className="flex gap-3">
-                   <span className="material-symbols-outlined text-rose-500 text-lg">info</span>
-                   <p className="text-[12px] text-slate-600 dark:text-slate-300 font-medium">“查库存”修正率异常偏高，建议补充同义词干预规则。</p>
-                 </li>
-                 <li className="flex gap-3">
-                   <span className="material-symbols-outlined text-emerald-500 text-lg">check_circle</span>
-                   <p className="text-[12px] text-slate-600 dark:text-slate-300 font-medium">响应耗时处于健康状态 (1.2s)，无需优化 API 链路。</p>
-                 </li>
-                 <li className="flex gap-3">
-                   <span className="material-symbols-outlined text-amber-500 text-lg">warning</span>
-                   <p className="text-[12px] text-slate-600 dark:text-slate-300 font-medium">有 6% 的越界提问集中在“财务报销”，考虑接入相关系统。</p>
-                 </li>
-               </ul>
             </div>
           </div>
         </div>
@@ -283,15 +275,75 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ onClose }) => {
               </div>
             ))}
           </div>
-          <div className="mt-8 pt-6 border-t border-slate-50 dark:border-slate-800 text-center">
+          <div className="mt-8 pt-6 border-t border-slate-50 dark:border-slate-800">
              <button 
-              className="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 dark:bg-slate-800/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all border border-transparent hover:border-indigo-100 dark:hover:border-indigo-800/50 shadow-sm active:scale-95"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border border-indigo-100/50 dark:border-indigo-800/50 shadow-sm active:scale-95"
               onClick={() => alert('报告生成中，请稍候...')}
              >
                <span className="material-symbols-outlined text-[18px]">picture_as_pdf</span>
                下载完整报告 (PDF)
              </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderBadCases = () => (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Bad Case 案例集</h2>
+          <p className="text-sm text-slate-500 mt-1 font-medium">汇总模型识别错误或回答不佳的真实对话案例，用于针对性迭代规则库与 Prompt。</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-2xl font-bold text-sm flex items-center gap-2 shadow-lg transition-all active:scale-95">
+            <span className="material-symbols-outlined text-lg">upload_file</span>导出案例
+          </button>
+        </div>
+      </header>
+
+      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-separate border-spacing-0">
+            <thead>
+              <tr className="bg-slate-50/50 dark:bg-slate-800/50">
+                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">案例 ID</th>
+                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">用户提问</th>
+                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">AI 回答</th>
+                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">优化意见 / Correction</th>
+                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">发生时间</th>
+                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {badCases.map((bc) => (
+                <tr key={bc.id} className="group hover:bg-slate-50/30 dark:hover:bg-slate-800/30 transition-all duration-300">
+                  <td className="px-8 py-5">
+                    <span className="text-[11px] font-mono font-bold text-slate-400">{bc.id}</span>
+                  </td>
+                  <td className="px-8 py-5">
+                    <p className="text-[13px] font-bold text-slate-800 dark:text-white max-w-[200px] truncate">{bc.query}</p>
+                  </td>
+                  <td className="px-8 py-5">
+                    <p className="text-[12px] text-slate-500 dark:text-slate-400 max-w-[200px] line-clamp-2">{bc.aiResponse}</p>
+                  </td>
+                  <td className="px-8 py-5">
+                    <div className="flex items-start gap-2 max-w-[240px]">
+                      <span className="material-symbols-outlined text-rose-500 text-[16px] mt-0.5">error_outline</span>
+                      <p className="text-[12px] font-medium text-rose-600 dark:text-rose-400">{bc.correction}</p>
+                    </div>
+                  </td>
+                  <td className="px-8 py-5">
+                    <span className="text-[11px] font-bold text-slate-400">{bc.timestamp}</span>
+                  </td>
+                  <td className="px-8 py-5 text-right">
+                    <button className="text-indigo-600 text-[11px] font-black uppercase tracking-widest hover:underline">去处理</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -760,7 +812,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ onClose }) => {
             <button key={tab.id} onClick={() => setActiveTab(tab.id as TabType)} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-bold transition-all ${activeTab === tab.id ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 shadow-sm border border-indigo-100/50' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}><span className="material-symbols-outlined text-[24px]">{tab.icon}</span>{tab.label}</button>
           ))}
           <div className="pt-8 pb-3 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">平台治理</div>
-          <button onClick={() => setActiveTab('knowledge')} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-bold transition-all ${activeTab === 'knowledge' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 shadow-sm border border-indigo-100/50' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}><span className="material-symbols-outlined text-[24px]">database</span>知识库治理</button>
+          <button onClick={() => setActiveTab('bad_cases')} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-bold transition-all ${activeTab === 'bad_cases' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 shadow-sm border border-indigo-100/50' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}><span className="material-symbols-outlined text-[24px]">assignment_late</span>Bad Case 案例集</button>
         </nav>
 
         <div className="p-6 border-t border-slate-100 dark:border-slate-800">
@@ -776,7 +828,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ onClose }) => {
             {activeTab === 'intent_dictionary' && '原子意图管理'}
             {activeTab === 'intent_category' && '意图分类管理'}
             {activeTab === 'datasource' && '卡片管理器'}
-            {activeTab === 'knowledge' && '知识库治理'}
+            {activeTab === 'bad_cases' && 'Bad Case 案例集'}
           </span></div>
           <div className="flex items-center gap-6"><div className="text-right hidden sm:block"><p className="text-sm font-black text-slate-900 dark:text-white leading-none">咸亨管理员</p><p className="text-[10px] text-slate-400 mt-1 font-bold tracking-tighter uppercase">Super Admin Role</p></div><div className="size-11 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm"><span className="material-symbols-outlined text-slate-500 text-2xl">account_circle</span></div></div>
         </header>
@@ -787,7 +839,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ onClose }) => {
           {activeTab === 'intent_dictionary' && renderIntentDictionary()}
           {activeTab === 'intent_category' && renderIntentCategory()}
           {activeTab === 'datasource' && renderDataSources()}
-          {activeTab === 'knowledge' && <div className="flex flex-col items-center justify-center min-h-[60vh] text-slate-400 bg-white dark:bg-slate-900 rounded-[3rem] border border-dashed border-slate-200 dark:border-slate-800 shadow-sm"><div className="size-24 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-8"><span className="material-symbols-outlined text-6xl opacity-20">construction</span></div><h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">模块开发中</h3><p className="text-sm mt-3 max-w-sm text-center font-medium">该功能正在进行灰度测试。</p></div>}
+          {activeTab === 'bad_cases' && renderBadCases()}
         </main>
       </div>
     </div>
