@@ -7,9 +7,10 @@ interface SidebarProps {
   onClose: () => void;
   onNewChat: () => void;
   displayMode: DisplayMode;
+  onSwitchToAdmin: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNewChat, displayMode }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNewChat, displayMode, onSwitchToAdmin }) => {
   const isDesktop = displayMode === DisplayMode.DESKTOP;
   
   const historyItems = [
@@ -74,17 +75,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNewChat, displayMo
             ))}
           </div>
 
+          {/* New Integrated Bottom Profile & Mode Switcher Area */}
           <div className="p-4 mt-auto border-t border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-800/20">
-            <div className="flex items-center gap-3 bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-              <div className="size-9 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/10">
-                <span className="material-symbols-outlined text-[20px]">person</span>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3 bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div className="size-9 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/10 shrink-0">
+                  <span className="material-symbols-outlined text-[20px]">person</span>
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="text-xs font-bold truncate text-slate-800 dark:text-slate-100">咸亨管理员</span>
+                  <span className="text-[10px] text-indigo-500 font-bold uppercase tracking-tighter">Enterprise</span>
+                </div>
+                <button className="text-slate-400 hover:text-primary transition-colors p-1">
+                  <span className="material-symbols-outlined text-[18px]">settings</span>
+                </button>
               </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-xs font-bold truncate text-slate-800 dark:text-slate-100">管理员</span>
-                <span className="text-[10px] text-green-500 font-bold uppercase tracking-tighter">Enterprise</span>
-              </div>
-              <button className="text-slate-400 hover:text-slate-600 transition-colors">
-                <span className="material-symbols-outlined text-[18px]">settings</span>
+              
+              <button 
+                onClick={onSwitchToAdmin}
+                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[12px] font-bold text-[#5c5ce0] bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border border-indigo-100/50 dark:border-indigo-800/50 transition-all shadow-sm active:scale-[0.98]"
+              >
+                <span className="material-symbols-outlined text-[18px]">settings_suggest</span>
+                进入 AI 管理中心
               </button>
             </div>
           </div>

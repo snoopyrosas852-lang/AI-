@@ -55,7 +55,51 @@ export interface FullContentData {
   items: FullContentItem[];
 }
 
-// Admin Specific Types
+// --- Admin Specific Types ---
+
+export interface IntentOverrideRule {
+  id: string;
+  name: string;
+  keywords: string[];
+  targetIntent: string;
+  parameters: string; // JSON string
+  isActive: boolean;
+}
+
+export interface IntentCategory {
+  id: string;
+  code: string;
+  name: string;
+  color: string;
+  description: string;
+}
+
+export interface AtomicIntent {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  category: string; // References IntentCategory code
+}
+
+export interface ClarificationConfig {
+  id: string;
+  title: string;
+  options: { label: string; value: string; mappingParams: string }[];
+}
+
+export interface DataConnector {
+  id: string;
+  name: string;
+  baseUrl: string;
+  authType: 'apiKey' | 'token' | 'none';
+  mapping: {
+    titleField: string;
+    subtitleField: string;
+    statusField: string;
+  };
+}
+
 export interface MaskingRule {
   id: string;
   name: string;
@@ -64,11 +108,12 @@ export interface MaskingRule {
   isActive: boolean;
 }
 
-export interface GuidanceCommand {
+export interface BadCase {
   id: string;
-  icon: string;
-  label: string;
-  action: string;
+  query: string;
+  aiResponse: string;
+  correction: string;
+  timestamp: string;
 }
 
 export interface AdminStats {
@@ -76,18 +121,21 @@ export interface AdminStats {
   totalQueries: number;
   accuracyRate: string;
   activeUsers: number;
-  intentDistribution: {
-    direct: number; // > 0.9
-    clarify: number; // 0.6 - 0.9
-    fail: number; // < 0.6
-  };
-}
+  
+  // 新增指标
+  directHitRate: number;      // 意图直接命中率 (%)
+  clarifyConvRate: number;    // 澄清转化率 (%)
+  overrideRatio: number;      // 人工干预占比 (%)
+  correctionRate: number;     // 修正性输入率 (%)
+  outOfScopeRate: number;     // 意图越界率 (%)
+  avgLatency: number;         // 平均响应耗时 (s)
+  apiSuccessRate: number;     // API 成功率 (%)
+  viewThroughRate: number;    // 详情穿透率 (%)
 
-export interface KnowledgeDoc {
-  id: string;
-  name: string;
-  type: string;
-  size: string;
-  status: 'indexed' | 'processing' | 'error';
-  updatedAt: string;
+  intentDistribution: {
+    name: string;
+    count: number;
+    percent: number;
+    color: string;
+  }[];
 }

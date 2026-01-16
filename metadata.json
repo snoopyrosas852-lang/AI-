@@ -1,5 +1,5 @@
 {
-  "name": "AI 知识助手 (移动端)",
+  "name": "AI 知识助手",
   "description": "一个优雅的 AI 驱动的企业知识库助手，支持即时问答、建议指令和多维度的参考来源展示。",
   "requestFramePermissions": [
     "microphone"

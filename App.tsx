@@ -118,34 +118,16 @@ const App: React.FC = () => {
 
   const isDesktop = displayMode === DisplayMode.DESKTOP;
 
-  const renderModeSwitcher = () => (
-    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-white/90 dark:bg-slate-900/90 border border-slate-200/50 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl p-1.5 flex items-center gap-1 backdrop-blur-xl">
-      <button 
-        onClick={() => setAppMode(AppMode.USER)}
-        className={`px-5 py-2 rounded-xl text-[13px] font-bold transition-all flex items-center gap-2 ${appMode === AppMode.USER ? 'bg-[#f1f4ff] text-[#5c5ce0]' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-      >
-        <span className="material-symbols-outlined text-[20px]">person</span>
-        前台助手
-      </button>
-      <button 
-        onClick={() => setAppMode(AppMode.ADMIN)}
-        className={`px-5 py-2 rounded-xl text-[13px] font-bold transition-all flex items-center gap-2 ${appMode === AppMode.ADMIN ? 'bg-[#5c5ce0] text-white' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-      >
-        <span className="material-symbols-outlined text-[20px]">settings</span>
-        管理后台
-      </button>
-    </div>
-  );
-
   // User App Layout
   const renderUserLayout = () => (
     isDesktop ? (
-      <div className="flex w-full h-screen bg-white dark:bg-slate-950 overflow-hidden">
+      <div className="flex w-full h-screen bg-white dark:bg-slate-950 overflow-hidden font-display">
         <Sidebar 
           isOpen={isSidebarOpen} 
           onClose={() => setIsSidebarOpen(false)} 
           onNewChat={resetChat} 
           displayMode={displayMode}
+          onSwitchToAdmin={() => setAppMode(AppMode.ADMIN)}
         />
         
         <div className="flex flex-1 flex-col overflow-hidden relative">
@@ -208,13 +190,14 @@ const App: React.FC = () => {
         </div>
       </div>
     ) : (
-      <div className="flex items-center justify-center min-h-screen bg-slate-100 dark:bg-slate-900 p-4">
+      <div className="flex items-center justify-center min-h-screen bg-slate-100 dark:bg-slate-900 p-4 font-display">
         <div className="relative flex flex-col w-full max-w-[480px] h-[90vh] bg-white dark:bg-slate-950 rounded-[3rem] shadow-2xl overflow-hidden ring-8 ring-slate-800/5 dark:ring-white/5 border-[8px] border-slate-800 dark:border-slate-900">
           <Sidebar 
             isOpen={isSidebarOpen} 
             onClose={() => setIsSidebarOpen(false)} 
             onNewChat={resetChat} 
             displayMode={displayMode}
+            onSwitchToAdmin={() => setAppMode(AppMode.ADMIN)}
           />
           
           <Header 
@@ -258,7 +241,6 @@ const App: React.FC = () => {
   return (
     <>
       {appMode === AppMode.USER ? renderUserLayout() : <AdminLayout onClose={() => setAppMode(AppMode.USER)} />}
-      {renderModeSwitcher()}
     </>
   );
 };
